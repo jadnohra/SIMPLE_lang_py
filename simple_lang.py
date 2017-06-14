@@ -9,10 +9,9 @@ of the reduction functions.
 '''
 
 # i-o kludge
-g_rand_input = '-randin' in sys.argv
 def env_get(env, name):
   if name not in env:
-    if g_rand_input:
+    if '-randin' in sys.argv:
       val = random.randint(0, 100)
     else:
       val_str = raw_input(' > {}? '.format(name))
@@ -23,93 +22,82 @@ def env_set(env, name, val):
   env[name] = val
   return val
 
-# small-step semantics
-def ss_expr(redu, *sub_exps):
-  return { 'redu':redu, 'sub_exps':list(sub_exps), 'sub_vals':[] }
-def ss_is_expr(e):
+# commonalities between semantics
+def expr(redu, *sub_exps):
+  return { 'redu':redu, 'sub_exps':list(sub_exps) }
+def is_expr(e):
   return type(e) == type({})
-def ss_redu_expr(env, e):
+def expr_dup(e):
+  return copy.deepcopy(e)
+def redu_expr(env, e, redu_func):
+  while is_expr(e):
+    e = redu_func(env, e)
+  return (e, env)
+
+# operational semantics
+#  big-step semantics
+def bs_redu_expr_once(env, e):
+  return e['redu'](env, [bs_redu_expr_once(env, sub_exp) for sub_exp in e['sub_exps']])
+bs_redu_expr = lambda env, e: redu_expr(env, e, bs_redu_expr_once)
+#  small-step semantics
+def ss_redu_expr_once(env, e):
+  if 'sub_vals' not in e:
+    e['sub_vals'] = []
   n_sub_vals = len(e['sub_vals'])
   if n_sub_vals == len(e['sub_exps']):
     return e['redu'](env, e['sub_vals'])
-  redu_res = ss_redu_expr(env, e['sub_exps'][n_sub_vals])
-  if ss_is_expr(redu_res):
+  redu_res = ss_redu_expr_once(env, e['sub_exps'][n_sub_vals])
+  if is_expr(redu_res):
     e['sub_exps'][n_sub_vals] = redu_res
   else:
     e['sub_vals'].append(redu_res)
   return e
-def ss_redu_expr_iter(env, e):
-  while ss_is_expr(e):
-    e = ss_redu_expr(env, e)
-  return (e, env)
-def ss_expr_dup(e):
-  return copy.deepcopy(e)
-
-# small-step reduction functions
-ss_b = lambda val: (lambda env, sub_vals: bool(val))
-ss_i = lambda val: (lambda env, sub_vals: int(val))
-ss_not = lambda env, sub_vals: (not sub_vals[0])
-ss_and = lambda env, sub_vals: (sub_vals[0] and sub_vals[1])
-ss_or = lambda env, sub_vals: (sub_vals[0] or sub_vals[1])
-ss_eq = lambda env, sub_vals: (sub_vals[0] == sub_vals[1])
-ss_neq = lambda env, sub_vals: (sub_vals[0] != sub_vals[1])
-ss_lt = lambda env, sub_vals: (sub_vals[0] < sub_vals[1])
-ss_add = lambda env, sub_vals: (sub_vals[0] + sub_vals[1])
-ss_mul = lambda env, sub_vals: (sub_vals[0] * sub_vals[1])
-ss_var = lambda name: ( lambda env, sub_vals: env_get(env, name) )
-ss_set = lambda name: ( lambda env, sub_vals: env_set(env, name, sub_vals[0]) )
-ss_if = lambda l, r: ( lambda env, sub_vals: l if sub_vals[0] else r )
-ss_seq = lambda env, sub_vals: ('done seq')
-ss_while = lambda c, b: (lambda env, sub_vals: ss_expr( ss_if( ss_expr(ss_seq, ss_expr_dup(b), ss_expr(ss_while(c, b)) ) , ss_expr(ss_seq)), ss_expr_dup(c) ) )
+ss_redu_expr = lambda env, e: redu_expr(env, e, ss_redu_expr_once)
+#  reduction functions
+os_b = lambda val: (lambda env, exp_children: bool(val))
+os_i = lambda val: (lambda env, exp_children: int(val))
+os_not = lambda env, exp_children: (not exp_children[0])
+os_and = lambda env, exp_children: (exp_children[0] and exp_children[1])
+os_or = lambda env, exp_children: (exp_children[0] or exp_children[1])
+os_eq = lambda env, exp_children: (exp_children[0] == exp_children[1])
+os_neq = lambda env, exp_children: (exp_children[0] != exp_children[1])
+os_lt = lambda env, exp_children: (exp_children[0] < exp_children[1])
+os_add = lambda env, exp_children: (exp_children[0] + exp_children[1])
+os_mul = lambda env, exp_children: (exp_children[0] * exp_children[1])
+os_var = lambda name: ( lambda env, exp_children: env_get(env, name) )
+os_set = lambda name: ( lambda env, exp_children: env_set(env, name, exp_children[0]) )
+os_if = lambda l, r: ( lambda env, exp_children: l if exp_children[0] else r )
+os_seq = lambda env, exp_children: ('done seq')
+os_while = lambda c, b: (lambda env, exp_children: expr( os_if( expr(os_while(c, b), expr_dup(b) ) , expr(os_seq)), expr_dup(c) ) )
 # additional functions
-ss_le = lambda env, sub_vals: (sub_vals[0] <= sub_vals[1])
-ss_ge = lambda env, sub_vals: (sub_vals[0] >= sub_vals[1])
-ss_gt = lambda env, sub_vals: (sub_vals[0] > sub_vals[1])
-ss_inc = lambda env, sub_vals: (sub_vals[0] + 1)
-ss_dec = lambda env, sub_vals: (sub_vals[0] - 1)
-ss_sub = lambda env, sub_vals: (sub_vals[0] - sub_vals[1])
-ss_eq0 = lambda env, sub_vals: (sub_vals[0] == 0)
-
-# to string
-g_pretty_redu = { ss_not:'not', ss_inc:'inc' }
-def string_expr_tree(e):
-  def recurse(state, e, depth):
-    if ss_is_expr(e):
-      state.append(' {}{}'.format(''.join(['.']*depth), g_pretty_redu.get(e['redu'], '?')))
-      for c in e['sub_exps']:
-        recurse(state, c, depth+1)
-    else:
-      state.append( ' {}{}'.format(''.join(['.']*depth), e))
-  state = []
-  recurse(state, e, 0)
-  return '\n'.join(state)
+os_le = lambda env, exp_children: (exp_children[0] <= exp_children[1])
+os_ge = lambda env, exp_children: (exp_children[0] >= exp_children[1])
+os_gt = lambda env, exp_children: (exp_children[0] > exp_children[1])
+os_inc = lambda env, exp_children: (exp_children[0] + 1)
+os_dec = lambda env, exp_children: (exp_children[0] - 1)
+os_sub = lambda env, exp_children: (exp_children[0] - exp_children[1])
+os_eq0 = lambda env, exp_children: (exp_children[0] == 0)
 
 # tests
 def test1():
-  print ss_expr(ss_b(True))
-  print ss_redu_expr({}, ss_expr(ss_b(True)) )
-  print ss_redu_expr_iter({}, ss_expr( ss_not, ss_expr(ss_b(True))) )
-
-  expr_1 = ss_expr(ss_lt, ss_expr(ss_i(4)), ss_expr(ss_i(5)))
-  expr_2 = ss_expr(ss_gt, ss_expr(ss_i(4)), ss_expr(ss_i(5)))
-  expr_3 = ss_expr(ss_or, expr_1, expr_2)
-  print ss_redu_expr_iter({}, expr_3 )
-
-  print ss_redu_expr_iter({}, ss_expr( ss_not, ss_expr(ss_var('x_b'))) )
-
-  print ss_redu_expr_iter({}, ss_expr( ss_set('y'), ss_expr(ss_inc, ss_expr(ss_var('x')))) )
-
-  expr_1 = ss_expr( ss_set('y'), ss_expr(ss_inc, ss_expr(ss_var('x'))))
-  expr_2 = ss_expr( ss_set('z'), ss_expr(ss_inc, ss_expr(ss_var('y'))))
-  print ss_redu_expr_iter({}, ss_expr( ss_seq, expr_1, expr_2) )
-
-  expr_c = ss_expr(ss_lt, ss_expr(ss_i(4)), ss_expr(ss_i(5)))
-  print ss_redu_expr_iter({}, ss_expr( ss_if(ss_expr(ss_i(6)), ss_expr(ss_i(-6))), expr_c) )
-
-  expr_c = ss_expr(ss_lt, ss_expr(ss_var('i')), ss_expr(ss_i(5)))
-  expr_b = ss_expr( ss_set('i'), ss_expr(ss_inc, ss_expr(ss_var('i'))) )
-  #expr_b = ss_expr(ss_var('j'))
-  print ss_redu_expr_iter({'i':0}, ss_expr( ss_while(expr_c, expr_b) ) )
-
+  for redu_expr in [ss_redu_expr, bs_redu_expr]:
+    print expr(os_b(True))
+    print redu_expr({}, expr(os_b(True)) )
+    print redu_expr({}, expr( os_not, expr(os_b(True))) )
+    expr_1 = expr(os_lt, expr(os_i(4)), expr(os_i(5)))
+    expr_2 = expr(os_gt, expr(os_i(4)), expr(os_i(5)))
+    expr_3 = expr(os_or, expr_1, expr_2)
+    print redu_expr({}, expr_3 )
+    print redu_expr({}, expr( os_not, expr(os_var('x_b'))) )
+    print redu_expr({}, expr( os_set('y'), expr(os_inc, expr(os_var('x')))) )
+    expr_1 = expr( os_set('y'), expr(os_inc, expr(os_var('x'))))
+    expr_2 = expr( os_set('z'), expr(os_inc, expr(os_var('y'))))
+    print redu_expr({}, expr( os_seq, expr_1, expr_2) )
+    expr_c = expr(os_lt, expr(os_i(4)), expr(os_i(5)))
+    print redu_expr({}, expr( os_if(expr(os_i(6)), expr(os_i(-6))), expr_c) )
+    expr_c = expr(os_lt, expr(os_var('i')), expr(os_i(5)))
+    expr_b = expr( os_set('i'), expr(os_inc, expr(os_var('i'))) )
+    print redu_expr({'i':0}, expr( os_while(expr_c, expr_b) ) )
+    print ''
 if '-test' in sys.argv:
   test1()
