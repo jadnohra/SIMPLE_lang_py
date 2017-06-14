@@ -125,6 +125,21 @@ def parsed_tree_to_expr(root):
       else:
         return node['content']
   return recurse(root['kids'][0])
+def parse_interactive():
+  lines = []
+  val_str = '\n'
+  while len(val_str):
+    if len(val_str.strip()):
+      lines.append(val_str.replace(' ', '.'))
+    depth = len(val_str)-len(val_str.strip())
+    depth = 0
+    val_str = raw_input(' > {}'.format('.'*depth))
+  root = parse_lines(lines, '.')
+  expr_str = parsed_tree_to_expr(root)
+  print expr_str
+  tbl, redu_expr = (ss_redu_tbl(), ss_redu_expr)
+  built_expr = eval(expr_str)
+  print redu_expr({}, built_expr)
 
 # tests
 def test1():
@@ -185,5 +200,8 @@ while
 
 if '-test2' in sys.argv:
   test2()
+
+if '-i' in sys.argv:
+  parse_interactive()
 
 #TODO while in big-step is borken again... probably needs a different version that small-step!
