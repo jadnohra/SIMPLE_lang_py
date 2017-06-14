@@ -98,8 +98,10 @@ dspy_while = lambda c,bdy: expr(lambda env, kids: 'while {}: {{ {} }}'.format(ki
 
 # tests
 def test1():
-  for tbl, redu_expr in [(ss_redu_tbl(), ss_redu_expr), (bs_redu_tbl(), bs_redu_expr), (dspy_redu_tbl(), dspy_redu_expr)][2:]:
-    print tbl['b'](True)
+  print ''
+  for title, tbl, redu_expr in [('small-step', ss_redu_tbl(), ss_redu_expr), ('big-step', bs_redu_tbl(), bs_redu_expr), ('denotational (py)', dspy_redu_tbl(), dspy_redu_expr)]:
+    print 'Testing {} semantics...\n'.format(title)
+    #print tbl['b'](True)
     print redu_expr({}, tbl['b'](True) )
     print redu_expr({}, tbl['not'](tbl['b'](True)) )
     expr_1 = tbl['lt'](tbl['i'](4), tbl['i'](5))
