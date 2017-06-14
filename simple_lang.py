@@ -23,7 +23,7 @@ def env_set(env, name, val):
   return val
 
 # SIMPLE syntax elements
-SIMPLE = ['b', 'i',
+g_SIMPLE = ['B', 'I',
           'not', 'and', 'or', 'eq', 'lt', 'succ', 'add', 'mul',
           'var', 'set', 'if', 'seq', 'while']
 
@@ -40,7 +40,7 @@ def redu_expr(env, e, redu_func):
   return (e, env)
 def redu_tbl(prefix):
   tbl = {}
-  for x in SIMPLE:
+  for x in g_SIMPLE:
     tbl[x] = globals().get('{}_{}'.format(prefix, x), None)
   return tbl
 
@@ -60,8 +60,8 @@ def ss_redu_expr_once(env, e):
 ss_redu_expr = lambda env, e: redu_expr(env, e, ss_redu_expr_once)
 ss_redu_tbl = lambda: redu_tbl('os')
 #  reduction functions
-os_b = lambda val: expr(lambda env, kids: bool(val))
-os_i = lambda val: expr(lambda env, kids: int(val))
+os_B = lambda val: expr(lambda env, kids: bool(val))
+os_I = lambda val: expr(lambda env, kids: int(val))
 os_not = lambda child: expr(lambda env, kids: (not kids[0]), child)
 os_and = lambda l,r: expr(lambda env, kids: (kids[0] and kids[1]), l,r)
 os_or = lambda l,r: expr(lambda env, kids: (kids[0] or kids[1]), l,r)
@@ -82,8 +82,8 @@ def dspy_redu_expr_once(env, e):
 dspy_redu_expr = lambda env, e: redu_expr(env, e, dspy_redu_expr_once)
 dspy_redu_tbl = lambda: redu_tbl('dspy')
 #  reduction functions
-dspy_b = lambda val: expr(lambda env, kids: '{}'.format(bool(val)))
-dspy_i = lambda val: expr(lambda env, kids: '{}'.format(int(val)))
+dspy_B = lambda val: expr(lambda env, kids: '{}'.format(bool(val)))
+dspy_I = lambda val: expr(lambda env, kids: '{}'.format(int(val)))
 dspy_not = lambda child: expr(lambda env, kids: '(not ({}))'.format(kids[0]), child)
 dspy_and = lambda l,r: expr(lambda env, kids: '(({}) and ({}))'.format(kids[0], kids[1]), l,r)
 dspy_or = lambda l,r: expr(lambda env, kids: '(({}) or ({}))'.format(kids[0], kids[1]), l,r)
@@ -96,16 +96,46 @@ dspy_if = lambda c,l,r: expr(lambda env, kids: 'if {}: {{ {} }} else: {{ {} }}'.
 dspy_seq = lambda *exprs: expr(lambda env, kids: '\n{};\n'.format('; \n'.join(kids)), *exprs)
 dspy_while = lambda c,bdy: expr(lambda env, kids: 'while {}: {{ {} }}'.format(kids[0], kids[1]), c,bdy)
 
+# parsing
+g_def_indent = ' '
+def parse_line(mother, line, indent = g_def_indent):
+  depth = 0; content = line;
+  while content.startswith(indent):
+    content = content[len(indent):]; depth = depth+1;
+  depth = depth if depth <= mother['depth'] + 1 else mother['depth'] + 1
+  while depth != mother['depth'] + 1:
+    mother = mother['mother']
+  node = { 'depth':depth, 'content':content, 'kids':[], 'mother':mother }
+  mother['kids'].append(node)
+  return node
+def parse_lines(lines, indent = g_def_indent):
+  root = { 'depth':-1, 'content':None, 'kids':[], 'mother':None }
+  node = root
+  for line in [x for x in lines if len(x.strip())]:
+    node = parse_line(node, line, indent)
+  return root
+def parsed_tree_to_expr(root):
+  def recurse(node):
+    if node['content'] in g_SIMPLE:
+      sub_strs = [recurse(child) for child in node['kids']]
+      return "tbl['{}']({})".format(node['content'], ', '.join(sub_strs))
+    else:
+      if node['mother']['content'] in ['var', 'set']:
+        return "'{}'".format(node['content'])
+      else:
+        return node['content']
+  return recurse(root['kids'][0])
+
 # tests
 def test1():
   print ''
   for title, tbl, redu_expr in [('small-step', ss_redu_tbl(), ss_redu_expr), ('big-step', bs_redu_tbl(), bs_redu_expr), ('denotational (py)', dspy_redu_tbl(), dspy_redu_expr)]:
     print 'Testing {} semantics...\n'.format(title)
-    #print tbl['b'](True)
-    print redu_expr({}, tbl['b'](True) )
-    print redu_expr({}, tbl['not'](tbl['b'](True)) )
-    expr_1 = tbl['lt'](tbl['i'](4), tbl['i'](5))
-    expr_2 = tbl['lt'](tbl['i'](5), tbl['i'](4))
+    #print tbl['B'](True)
+    print redu_expr({}, tbl['B'](True) )
+    print redu_expr({}, tbl['not'](tbl['B'](True)) )
+    expr_1 = tbl['lt'](tbl['I'](4), tbl['I'](5))
+    expr_2 = tbl['lt'](tbl['I'](5), tbl['I'](4))
     expr_3 = tbl['or'](expr_1, expr_2)
     print redu_expr({}, expr_3 )
     print redu_expr({}, tbl['not'](tbl['var']('x', 'test boolean')))
@@ -113,11 +143,47 @@ def test1():
     expr_1 = tbl['set']('y', tbl['succ'](tbl['var']('x')))
     expr_2 = tbl['set']('z', tbl['succ'](tbl['var']('y')))
     print redu_expr({}, tbl['seq'](expr_1, expr_2))
-    expr_c = tbl['lt'](tbl['i'](4), tbl['i'](5))
-    print redu_expr({}, tbl['if'](expr_c, tbl['i'](6), tbl['i'](-6)) )
-    expr_c = tbl['lt'](tbl['var']('i'), tbl['i'](5))
+    expr_c = tbl['lt'](tbl['I'](4), tbl['I'](5))
+    print redu_expr({}, tbl['if'](expr_c, tbl['I'](6), tbl['I'](-6)) )
+    expr_c = tbl['lt'](tbl['var']('i'), tbl['I'](5))
     expr_bdy = tbl['set']('i', tbl['succ'](tbl['var']('i')))
     print redu_expr({'i':0}, tbl['while'](expr_c, expr_bdy))
     print ''
-if '-test' in sys.argv:
+if '-test1' in sys.argv:
   test1()
+
+def test2():
+  test_str = '''
+while
+  lt
+    var
+      i
+    I
+      5
+  seq
+    set
+      i
+      succ
+        var
+          i
+    set
+      j
+      mul
+        var
+          i
+        I
+          10
+'''
+  root = parse_lines(test_str.split('\n'), '  ')
+  print root
+  expr_str = parsed_tree_to_expr(root)
+  print expr_str
+  tbl, redu_expr = (ss_redu_tbl(), ss_redu_expr)
+  built_expr = eval(expr_str)
+  print built_expr
+  print redu_expr({'i':0}, built_expr)
+
+if '-test2' in sys.argv:
+  test2()
+
+#TODO while in big-step is borken again... probably needs a different version that small-step!
