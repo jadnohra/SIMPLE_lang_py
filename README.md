@@ -28,7 +28,6 @@ Example
     > >        I
     > >          10
     > >
-    > 
     > tbl['while'](tbl['lt'](tbl['var']('i'), tbl['I'](5)), tbl['seq'](tbl['set']('i', tbl['succ'](tbl['var']('i'))), tbl['set']('j', tbl['mul'](tbl['var']('i'), tbl['I'](10)))))
     >
     > ('done seq', {'i': 5, 'j': 50})
