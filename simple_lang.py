@@ -101,5 +101,3 @@ dspy_set = lambda name,r: expr(lambda env, kids: '{} = ({})'.format(name, kids[0
 dspy_if = lambda c,l,r: expr(lambda env, kids: 'if {}: {{ {} }} else: {{ {} }}'.format(kids[0], kids[1], kids[2]), c,l,r)
 dspy_seq = lambda *exprs: expr(lambda env, kids: '\n{};\n'.format('; \n'.join(kids)), *exprs)
 dspy_while = lambda c,bdy: expr(lambda env, kids: 'while {}: {{ {} }}'.format(kids[0], kids[1]), c,bdy)
-
-#TODO while in big-step is borken again... probably needs a different version that small-step!
