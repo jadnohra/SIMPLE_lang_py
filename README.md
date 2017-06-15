@@ -42,8 +42,8 @@ of the reduction functions.
 Running a program that calculates powers of 2:
 
     > python simple_lang.py -pow2
-    > >  exp : 3
-    > returned: 16
+    > >  exp : 56
+    > returned: 144115188075855872
 
 The listing of the -pow2 program is:
 
