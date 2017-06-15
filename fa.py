@@ -23,7 +23,17 @@ def dfa_run(fa, state, chars):
   for char in chars:
     state = fa[(state, char)][0]
   return state
-def nfa_run(fa, state, chars, rnd):
+def nfa_run(fa, state, chars):
+  states = set([state])
+  for char in chars:
+    nstates = set()
+    for state in states:
+      key = (state, char)
+      for tgt in fa.get(key, []):
+        nstates.add(tgt)
+    states = nstates
+  return sorted(list(states))
+def nfa_run_rnd(fa, state, chars, rnd):
   for char in chars:
     key = (state, char)
     if key in fa:
@@ -83,8 +93,7 @@ def test2():
 '''
   fa = nfa_build(parse_rule_lines(test_str.split('\n')))
   print fa
-  first_state = '1'; chars = 'bbbbb';
-  for i in range(4):
-    print '{} : {} > {}'.format(first_state, chars, nfa_run(fa, '1', chars, random.SystemRandom(time.time())))
+  first_state = '1'; chars = 'bbabb';
+  print '{} : {} > {}'.format(first_state, chars, nfa_run(fa, '1', chars))
 if '-test2' in sys.argv:
   test2()
