@@ -1,5 +1,8 @@
 import sys, random, time
 
+# globals
+g_free_char = '!'
+
 # building
 def dfa_build(rules):
   dfa = {}
@@ -23,23 +26,33 @@ def dfa_run(fa, state, chars):
   for char in chars:
     state = fa[(state, char)][0]
   return state
+def nfa_enrich_with_free_moves(fa, states):
+  nstates = set()
+  for state in states:
+    for tgt in fa.get((state, g_free_char), []):
+      nstates.add(tgt)
+  return set(list(states) + list(nstates))
 def nfa_run(fa, state, chars):
-  states = set([state])
+  states = nfa_enrich_with_free_moves(fa, set([state]))
   for char in chars:
     nstates = set()
     for state in states:
-      key = (state, char)
-      for tgt in fa.get(key, []):
+      for tgt in fa.get((state, char), []):
         nstates.add(tgt)
-    states = nstates
-  return sorted(list(states))
+    states = nfa_enrich_with_free_moves(fa, nstates)
+  return list(states)
 def nfa_run_rnd(fa, state, chars, rnd):
   for char in chars:
-    key = (state, char)
-    if key in fa:
-      tgts = fa[key]
-      tgti = rnd.randint(0, len(tgts)-1)
-      state = tgts[tgti]
+    nstate = None
+    states = nfa_enrich_with_free_moves(fa, set([state]))
+    if len(states):
+      state = states[rnd.randint(0, len(states)-1)]
+      tgts = fa.get((state, char), [])
+      if len(tgts):
+        nstate = tgts[rnd.randint(0, len(tgts)-1)]
+    state = nstate
+    if nstate is None:
+      break
   return state
 
 # parsing
@@ -94,6 +107,24 @@ def test2():
   fa = nfa_build(parse_rule_lines(test_str.split('\n')))
   print fa
   first_state = '1'; chars = 'bbabb';
-  print '{} : {} > {}'.format(first_state, chars, nfa_run(fa, '1', chars))
+  print '{} : {} > {}'.format(first_state, chars, sorted(nfa_run(fa, '1', chars)))
 if '-test2' in sys.argv:
   test2()
+
+def test3():
+  # NFA at p. 77
+  test_str = '''
+1: ! > 2,4
+2: a > 3
+3: a > 2
+4 : a > 5
+5 : a > 6
+6 : a > 4
+'''
+  fa = nfa_build(parse_rule_lines(test_str.split('\n')))
+  print fa
+  for chars in ['a'*3, 'a'*4, 'a'*5]:
+    first_state = '1'
+    print '{} : {} > {}'.format(first_state, chars, sorted(nfa_run(fa, '1', chars)))
+if '-test3' in sys.argv:
+  test3()
