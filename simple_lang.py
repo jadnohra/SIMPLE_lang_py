@@ -38,10 +38,14 @@ def redu_expr(env, e, redu_func):
   while is_expr(e):
     e = redu_func(env, e)
   return (e, env)
-def redu_tbl(prefix):
+def redu_tbl(*prefixes):
+  context = globals()
   tbl = {}
   for x in g_SIMPLE:
-    tbl[x] = globals().get('{}_{}'.format(prefix, x), None)
+    for prefix in prefixes:
+      key = '{}_{}'.format(prefix, x)
+      if key in context:
+        tbl[x] = context[key]; break;
   return tbl
 
 # operational semantics
@@ -49,7 +53,7 @@ def redu_tbl(prefix):
 def bs_redu_expr_once(env, e):
   return e['redu'](env, [bs_redu_expr_once(env, sub_exp) for sub_exp in e['kids']])
 bs_redu_expr = lambda env, e: redu_expr(env, e, bs_redu_expr_once)
-bs_redu_tbl = lambda: redu_tbl('os')
+bs_redu_tbl = lambda: redu_tbl('bs', 'os')
 #  small-step semantics
 def ss_redu_expr_once(env, e):
   for i,child in enumerate(e['kids']):
@@ -58,7 +62,7 @@ def ss_redu_expr_once(env, e):
       return e
   return e['redu'](env, e['kids'])
 ss_redu_expr = lambda env, e: redu_expr(env, e, ss_redu_expr_once)
-ss_redu_tbl = lambda: redu_tbl('os')
+ss_redu_tbl = lambda: redu_tbl('ss', 'os')
 #  reduction functions
 os_B = lambda val: expr(lambda env, kids: bool(val))
 os_I = lambda val: expr(lambda env, kids: int(val))
@@ -74,7 +78,8 @@ os_var = lambda name,descr='': expr(lambda env, kids: env_get(env, name, descr))
 os_set = lambda name,r: expr(lambda env, kids: env_set(env, name, kids[0]), r)
 os_if = lambda c,l,r: expr(lambda env, kids: (l if kids[0] else r), c)
 os_seq = lambda *exprs: expr(lambda env, kids: ('done seq'), *exprs)
-os_while = lambda c,bdy: os_if(expr_dup(c), os_seq(expr_dup(bdy), expr(lambda env,kids: os_while(c,bdy))), os_seq())
+ss_while = lambda c,bdy: os_if(expr_dup(c), os_seq(expr_dup(bdy), expr(lambda env,kids: ss_while(c,bdy))), os_seq())
+bs_while = lambda c,bdy: os_if(expr_dup(c), os_seq(expr_dup(bdy), expr(lambda env,kids: bs_while(c,bdy))), os_seq())
 
 #denotational semantics (to python)
 def dspy_redu_expr_once(env, e):
