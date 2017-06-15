@@ -1,13 +1,5 @@
 import sys, random, copy
 
-'''
-Small-Step, big-step, and denotational semantics of the 'SIMPLE' language
-as per the book:
-  [Stuart, Tom. Understanding Computation: From Simple Machines to Impossible Programs. " O'Reilly Media, Inc.", 2013],
-but implemented in Python instead of Ruby, along with slight modifications for even simpler expressions
-of the reduction functions.
-'''
-
 # i-o kludge
 def env_get(env, name, descr = ''):
   if name not in env:
