@@ -89,7 +89,11 @@ def preparse_lines(lines, indent = g_def_indent):
       break
   return nlines
 def parsed_tree_to_expr(root):
+#  auto_seq_tbl = {'while':(1,2)}
   def recurse(node):
+    #if node['content'] in auto_seq_tbl and len(node['kids']) > auto_seq_tbl[node['contents']][1]:
+    #  nnode = { 'content':'seq', 'kids':node['kids'][auto_seq_tbl[node['contents']][0]:] }
+    #  node['kids'] = node['kids'][:auto_seq_tbl[node['contents']][0]] + [nnode]
     if node['content'] in g_SIMPLE:
       sub_strs = [recurse(child) for child in node['kids']]
       return "tbl['{}']({})".format(node['content'], ', '.join(sub_strs))
@@ -98,7 +102,7 @@ def parsed_tree_to_expr(root):
         return "'{}'".format(node['content'])
       else:
         return node['content']
-  return recurse(root['kids'][0])
+  return [recurse(program) for program in root['kids']]
 def parse_interactive():
   lines = []
   val_str = '\n'
@@ -109,8 +113,8 @@ def parse_interactive():
     depth = 0
     val_str = raw_input(' > {}'.format('.'*depth))
   root = parse_lines(preparse_lines(lines))
-  expr_str = parsed_tree_to_expr(root)
-  print expr_str
-  tbl, redu_expr = (ss_redu_tbl(), ss_redu_expr)
-  built_expr = eval(expr_str)
-  print redu_expr({}, built_expr)
+  for expr_str in parsed_tree_to_expr(root):
+    print expr_str
+    tbl, redu_expr = (ss_redu_tbl(), ss_redu_expr)
+    built_expr = eval(expr_str)
+    print redu_expr({}, built_expr)
