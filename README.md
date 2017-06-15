@@ -7,15 +7,32 @@ of the reduction functions.
 Example
 
     > python simple_lang.py -i
-    > > while lt i 5
+    > > while i < 5
     > >  seq
-    > >    set
-    > >      i
-    > >      succ i
-    > >    set
-    > >      j
-    > >      mul i 10
+    > >   i = (inc i)
+    > >   j = (i * 10)
     > >
+    >
+    > while
+    >   lt
+    >     var
+    >       i
+    >     I
+    >       5
+    >   seq
+    >     set
+    >       i
+    >       succ
+    >         var
+    >           i
+    >     set
+    >       j
+    >       mul
+    >         var
+    >           i
+    >         I
+    >           10
+    >
     > tbl['while'](tbl['lt'](tbl['var']('i'), tbl['I'](5)), tbl['seq'](tbl['set']('i', tbl['succ'](tbl['var']('i'))), tbl['set']('j', tbl['mul'](tbl['var']('i'), tbl['I'](10)))))
     >
     > ('done seq', {'i': 5, 'j': 50})

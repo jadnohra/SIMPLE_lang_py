@@ -87,7 +87,13 @@ while lt i 5
       j
       mul i 10
 '''
-  for test_str in [test_str1, test_str2]:
+  test_str3 = '''
+while i < 5
+  seq
+    i = (inc i)
+    j = (i * 10)
+'''
+  for test_str in [test_str1, test_str2, test_str3]:
     print '\n'.join(preparse_lines(test_str.split('\n'), '  '))
 if '-test3' in sys.argv:
   test3()

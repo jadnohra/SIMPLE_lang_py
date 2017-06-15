@@ -18,6 +18,7 @@ def parse_lines(lines, indent = g_def_indent):
     node = parse_line(node, line, indent)
   return root
 def preparse_lines_once(lines, indent = g_def_indent):
+  transl_tbl = {'<':'lt', '+':'add', '*':'mul', 'inc':'succ', '=':'set'}
   def prepend(node, ncontent, line, nlines):
     nnode = { 'depth':node['depth'], 'content':ncontent, 'kids':[node], 'mother':node['mother'] }
     node['mother']['kids'][node['mother']['kids'].index(node)] = nnode
@@ -28,29 +29,55 @@ def preparse_lines_once(lines, indent = g_def_indent):
     nnode = { 'depth':node['depth']+1, 'content':ncontent, 'kids':[], 'mother':node }
     node['mother']['kids'].append(nnode)
     nlines.append(indent*nnode['depth'] + nnode['content'])
+  def group_parens(words, sep = ' '):
+    groups = []
+    pdepth = 0
+    for word in words:
+      if pdepth > 0:
+        groups[-1] = groups[-1] + sep + word
+        if word == ')':
+          pdepth = pdepth - 1
+      else:
+        groups.append(word)
+        if word == '(':
+          pdepth = 1
+    return groups
+  def clean_ws(word):
+    return ' '.join([x for x in word.split() if len(x.strip())])
+  def sep_parens(word):
+    return clean_ws(' '.join(word.replace('(', ' ( ').replace(')', ' ) ').split()))
+  def translate(word):
+    return transl_tbl.get(word, word)
   nlines = []
   root = { 'depth':-1, 'content':None, 'kids':[], 'mother':None }
   node = root
   for line in [x for x in lines if len(x.strip())]:
     node = parse_line(node, line, indent)
-    words = node['content'].split(' ')
-    if len(words) > 1:
-      if words[0] == 'while':
-        nlines.append(indent*node['depth']+words[0])
-        postpend(node, ' '.join(words[1:]), line, nlines)
-      else:
-        nlines.append(indent*node['depth']+words[0])
-        node['contents'] = words[0]
-        for nword in words[1:]:
-          postpend(node, nword, line, nlines)
-    elif node['content'].isdigit() and node['mother'] is not None and node['mother']['content'] != 'I':
-      prepend(node, 'I', line, nlines)
-    elif node['content'] not in g_SIMPLE and node['content'].lower()[0] in ['t','f'] and node['mother'] is not None and node['mother']['content'] != 'B':
-      prepend(node, 'B', line, nlines)
-    elif node['content'] not in g_SIMPLE and node['mother'] is not None and node['mother']['content'] not in ['B', 'I', 'var', 'set']:
-      prepend(node, 'var', line, nlines)
+    words = [translate(x) for x in sep_parens(clean_ws(node['content'])).split(' ')]
+    node['content'] = ' '.join(words)
+    if words[0] == '(':
+      postpend(node['mother'], ' '.join(words[1:-1]), line, nlines)
     else:
-      nlines.append(line)
+      words = group_parens(words)
+      if len(words) > 1:
+        if words[0] == 'while':
+          nlines.append(indent*node['depth']+words[0])
+          postpend(node, ' '.join(words[1:]), line, nlines)
+        else:
+          if len(words) == 3 and words[1] in g_SIMPLE:
+              words[0], words[1] = words[1], words[0]
+          nlines.append(indent*node['depth']+words[0])
+          node['contents'] = words[0]
+          for nword in words[1:]:
+            postpend(node, nword, line, nlines)
+      elif node['content'].isdigit() and node['mother'] is not None and node['mother']['content'] != 'I':
+        prepend(node, 'I', line, nlines)
+      elif node['content'] not in g_SIMPLE and node['content'].lower()[0] in ['t','f'] and node['mother'] is not None and node['mother']['content'] != 'B':
+        prepend(node, 'B', line, nlines)
+      elif node['content'] not in g_SIMPLE and node['mother'] is not None and node['mother']['content'] not in ['B', 'I', 'var', 'set']:
+        prepend(node, 'var', line, nlines)
+      else:
+        nlines.append(line)
   return nlines
 def preparse_lines(lines, indent = g_def_indent):
   n = 0
@@ -77,11 +104,11 @@ def parse_interactive():
   val_str = '\n'
   while len(val_str):
     if len(val_str.strip()):
-      lines.append(val_str.replace(' ', '.'))
+      lines.append(val_str)
     depth = len(val_str)-len(val_str.strip())
     depth = 0
     val_str = raw_input(' > {}'.format('.'*depth))
-  root = parse_lines(lines, '.')
+  root = parse_lines(preparse_lines(lines))
   expr_str = parsed_tree_to_expr(root)
   print expr_str
   tbl, redu_expr = (ss_redu_tbl(), ss_redu_expr)
