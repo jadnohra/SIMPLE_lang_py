@@ -79,7 +79,8 @@ os_set = lambda name,r: expr(lambda env, kids: env_set(env, name, kids[0]), r)
 os_if = lambda c,l,r: expr(lambda env, kids: (l if kids[0] else r), c)
 os_seq = lambda *exprs: expr(lambda env, kids: ('done seq'), *exprs)
 ss_while = lambda c,bdy: os_if(expr_dup(c), os_seq(expr_dup(bdy), expr(lambda env,kids: ss_while(c,bdy))), os_seq())
-bs_while = lambda c,bdy: os_if(expr_dup(c), os_seq(expr_dup(bdy), expr(lambda env,kids: bs_while(c,bdy))), os_seq())
+bs_while_eval = lambda c,bdy,env: bs_redu_expr(env, os_if(expr_dup(c), os_seq(expr_dup(bdy), expr(lambda env,kids: bs_while_eval(c,bdy,env))), os_seq()))
+bs_while = lambda c,bdy: os_if(expr_dup(c), os_seq(expr_dup(bdy), expr(lambda env,kids: bs_while_eval(c,bdy,env))), os_seq())
 
 #denotational semantics (to python)
 def dspy_redu_expr_once(env, e):
