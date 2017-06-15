@@ -4,7 +4,9 @@ as per the book *[ [Understanding Computation: From Simple Machines to Impossibl
 but implemented in Python instead of Ruby, along with slight modifications for even simpler expressions
 of the reduction functions.
 
-Example
+## Examples
+
+  Running in interactive mode:
 
     > python simple_lang.py -i
     > > while i < 5
@@ -36,3 +38,22 @@ Example
     > tbl['while'](tbl['lt'](tbl['var']('i'), tbl['I'](5)), tbl['seq'](tbl['set']('i', tbl['succ'](tbl['var']('i'))), tbl['set']('j', tbl['mul'](tbl['var']('i'), tbl['I'](10)))))
     >
     > ('done seq', {'i': 5, 'j': 50})
+
+Running a program that calculates powers of 2:
+
+    > python simple_lang.py -pow2
+    > >  exp : 3
+    > returned: 16
+
+The listing of the -pow2 program is:
+
+    > seq
+    >  if (exp < 1)
+    >    ret = 1
+    >    seq
+    >      ret = 2
+    >      i = 0
+    >      while i < exp
+    >        seq
+    >          ret = (ret * 2)
+    >          i = (inc i)

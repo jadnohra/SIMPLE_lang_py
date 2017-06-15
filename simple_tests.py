@@ -93,10 +93,25 @@ while i < 5
     i = (inc i)
     j = (i * 10)
 '''
-  for test_str in [test_str1, test_str2, test_str3]:
+  for test_str in [test_str1, test_str2, test_str3, test_pow2]:
     print '\n'.join(preparse_lines(test_str.split('\n'), '  '))
 if '-test3' in sys.argv:
   test3()
+
+prog_pow2 = '''
+seq
+  if (exp < 1)
+    ret = 1
+    seq
+      ret = 2
+      i = 0
+      while i < exp
+        seq
+          ret = (ret * 2)
+          i = (inc i)
+'''
+if '-pow2' in sys.argv:
+  run_program(prog_pow2, '  ')
 
 if '-i' in sys.argv:
   parse_interactive()

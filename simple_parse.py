@@ -18,7 +18,7 @@ def parse_lines(lines, indent = g_def_indent):
     node = parse_line(node, line, indent)
   return root
 def preparse_lines_once(lines, indent = g_def_indent):
-  transl_tbl = {'<':'lt', '+':'add', '*':'mul', 'inc':'succ', '=':'set'}
+  transl_tbl = {'<':'lt', '+':'add', '*':'mul', 'inc':'succ', '=':'set', '==':'eq'}
   def prepend(node, ncontent, line, nlines):
     nnode = { 'depth':node['depth'], 'content':ncontent, 'kids':[node], 'mother':node['mother'] }
     node['mother']['kids'][node['mother']['kids'].index(node)] = nnode
@@ -103,6 +103,21 @@ def parsed_tree_to_expr(root):
       else:
         return node['content']
   return [recurse(program) for program in root['kids']]
+def run_program(program, indent):
+  tbl, redu_expr = (ss_redu_tbl(), ss_redu_expr)
+  preparse = preparse_lines(program.split('\n'), indent)
+  #print '\n'.join(preparse).replace(' ', '.')
+  root = parse_lines(preparse, indent)
+  for expr_str in parsed_tree_to_expr(root):
+    built_expr = eval(expr_str)
+    e,env = redu_expr({}, built_expr)
+    if '(' not in str(e):
+      print 'result: {}'.format(e)
+    if 'ret' in env:
+      print 'returned: {}'.format(env['ret'])
+    else:
+      if len(env):
+        print 'env: {}'.format(' '.join(['{}:{}'.format(x, env[x]) for x in sorted(env.keys())]))
 def parse_interactive():
   lines = []
   val_str = '\n'
@@ -113,8 +128,8 @@ def parse_interactive():
     depth = 0
     val_str = raw_input(' > {}'.format('.'*depth))
   root = parse_lines(preparse_lines(lines))
+  tbl, redu_expr = (ss_redu_tbl(), ss_redu_expr)
   for expr_str in parsed_tree_to_expr(root):
     print expr_str
-    tbl, redu_expr = (ss_redu_tbl(), ss_redu_expr)
     built_expr = eval(expr_str)
     print redu_expr({}, built_expr)
