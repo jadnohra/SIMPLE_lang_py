@@ -8,25 +8,14 @@ of the reduction functions.
 Example
 
     > python simple_lang.py -i
-    > > while
-    > >  lt
-    > >   var
-    > >    i
-    > >   I
-    > >    5
+    > > while lt i 5
     > >  seq
     > >    set
     > >      i
-    > >      succ
-    > >        var
-    > >          i
+    > >      succ i
     > >    set
     > >      j
-    > >      mul
-    > >        var
-    > >          i
-    > >        I
-    > >          10
+    > >      mul i 10
     > >
     > tbl['while'](tbl['lt'](tbl['var']('i'), tbl['I'](5)), tbl['seq'](tbl['set']('i', tbl['succ'](tbl['var']('i'))), tbl['set']('j', tbl['mul'](tbl['var']('i'), tbl['I'](10)))))
     >
