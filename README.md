@@ -1,7 +1,6 @@
 # SIMPLE_lang_py
 Small-Step, big-step, and denotational semantics of the 'SIMPLE' language
-as per the book:
-  [Stuart, Tom. Understanding Computation: From Simple Machines to Impossible Programs. " O'Reilly Media, Inc.", 2013],
+as per the book:[Understanding Computation: From Simple Machines to Impossible Programs. (Tom Stuart)](http://shop.oreilly.com/product/0636920025481.do),
 but implemented in Python instead of Ruby, along with slight modifications for even simpler expressions
 of the reduction functions.
 
