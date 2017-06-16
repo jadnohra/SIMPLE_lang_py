@@ -35,11 +35,13 @@ ul_right = (lambda l: (lambda r: r))
 ul_tuple = (lambda l: (lambda r: (lambda p: p(l)(r))))
 ul_ltup = (lambda tup: tup(ul_left))
 ul_rtup = (lambda tup: tup(ul_right))
+ul_succ = (lambda n: (lambda p: (lambda x: p(n(p)(x)) )))
 
 
 # convenience lambdas
 ul_true = ul_left
 ul_false = ul_right
+ul_inc = ul_succ
 ul_N = lambda N: ul_meta_build_N(N)[0]
 ul_B = lambda B: ul_true if B else ul_false
 ul_if = lambda b: b
@@ -52,3 +54,4 @@ def test1():
   print '0 is 0:', ul_decode_B(ul_is0(ul_N(0)))
   print '5 is 0:', ul_decode_B(ul_is0(ul_N(3)))
   print 'right of (3,6):', ul_decode_N(ul_rtup(ul_tuple(ul_N(3))(ul_N(6))))
+  print 'inc 5:', ul_decode_N(ul_succ(ul_N(5)))
