@@ -30,11 +30,17 @@ def ul_inspect_depth(lbda):
 '''
 
 # lambdas
-ul_N = lambda n: ul_meta_build_N(n)[0]
-ul_true = lambda: (lambda t: (lambda f: t))
-ul_false = lambda: (lambda t: (lambda f: f))
-ul_B = lambda b: ul_true() if b else ul_false()
+ul_true = (lambda t: (lambda f: t))
+ul_false = (lambda t: (lambda f: f))
+
+# convenience lambdas
+ul_N = lambda N: ul_meta_build_N(N)[0]
+ul_B = lambda B: ul_true if B else ul_false
+ul_if = lambda b: b
+ul_is0 = lambda n: n(lambda x: ul_false)(ul_true)
 
 def test1():
-  print ul_decode_N(ul_N(5))
-  print ul_decode_B(ul_B(False))
+  print '5', ul_decode_N(ul_N(5))
+  print 'False', ul_decode_B(ul_B(False))
+  print '0 is 0', ul_decode_B(ul_is0(ul_N(0)))
+  print '5 is 0', ul_decode_B(ul_is0(ul_N(3)))
