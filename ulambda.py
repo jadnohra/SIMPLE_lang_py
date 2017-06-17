@@ -35,8 +35,9 @@ ul_right = (lambda l: (lambda r: r))
 ul_tuple = (lambda l: (lambda r: (lambda p: p(l)(r))))
 ul_ltup = (lambda tup: tup(ul_left))
 ul_rtup = (lambda tup: tup(ul_right))
-ul_succ = (lambda n: (lambda p: (lambda x: p(n(p)(x)) )))
-ul_pred = (lambda n: (lambda p: (lambda x: ul_rtup(n(lambda yx: ul_tuple(p(ul_ltup(yx)))(ul_ltup(yx)) )(ul_tuple(x)(x)))) ))
+ul_succ = (lambda n: (lambda p: (lambda m: p(n(p)(m)) )))
+ul_pred = (lambda n: (lambda p: (lambda m: ul_rtup(n(lambda pm_m: ul_tuple(p(ul_ltup(pm_m)))(ul_ltup(pm_m)) )(ul_tuple(m)(m)))) ))
+#ul_add = (lambda n1: (lambda 
 
 # convenience lambdas
 ul_true = ul_left
@@ -46,7 +47,7 @@ ul_dec = ul_pred
 ul_N = lambda N: ul_meta_build_N(N)[0]
 ul_B = lambda B: ul_true if B else ul_false
 ul_if = lambda b: b
-ul_is0 = lambda n: n(lambda x: ul_false)(ul_true)
+ul_is0 = lambda n: n(lambda m: ul_false)(ul_true)
 
 
 def test1():
