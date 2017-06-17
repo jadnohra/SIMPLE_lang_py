@@ -37,7 +37,16 @@ ul_ltup = (lambda tup: tup(ul_left))
 ul_rtup = (lambda tup: tup(ul_right))
 ul_succ = (lambda n: (lambda p: (lambda m: p(n(p)(m)) )))
 ul_pred = (lambda n: (lambda p: (lambda m: ul_rtup(n(lambda pm_m: ul_tuple(p(ul_ltup(pm_m)))(ul_ltup(pm_m)) )(ul_tuple(m)(m)))) ))
-#ul_add = (lambda n1: (lambda 
+ul_add = (lambda n1: (lambda n2: n2(lambda m: ul_inc(m))(n1) ))
+ul_sub = (lambda n1: (lambda n2: n2(lambda m: ul_pred(m))(n1) ))
+ul_mul = (lambda n1: (lambda n2: n2(ul_add(n1))(lambda p: lambda m: m) ))
+ul_pow = (lambda n1: (lambda n2: n2(ul_mul(n1))(lambda p: lambda m: p(m)) ))
+
+# alternative lambdas that do not use 'constants' such as 0,1 and
+# are hence more general, not relying on the structure of the encoding of naturals
+_ul_mul_v1 = (lambda n1: (lambda n2: (ul_pred(n2))(ul_add(n1))(n1) ))
+_ul_mul_v2 = (lambda n1: (lambda n2: n2(ul_add(n1))( ul_sub(n1)(n1) ) ))
+_ul_pow_v1 = (lambda n1: (lambda n2: (ul_pred(n2))(ul_mul(n1))(n1) ))
 
 # convenience lambdas
 ul_true = ul_left
@@ -58,3 +67,8 @@ def test1():
   print 'right of (3,6):', ul_decode_N(ul_rtup(ul_tuple(ul_N(3))(ul_N(6))))
   print 'inc 5:', ul_decode_N(ul_succ(ul_N(5)))
   print 'dec 5:', ul_decode_N(ul_dec(ul_N(5)))
+  print 'dec 0:', ul_decode_N(ul_dec(ul_N(0)))
+  print '5 + 3:', ul_decode_N(ul_add(ul_N(5))(ul_N(3)) )
+  print '5 - 3:', ul_decode_N(ul_sub(ul_N(5))(ul_N(3)) )
+  print '5 * 3:', ul_decode_N(ul_mul(ul_N(5))(ul_N(3)) )
+  print '2 ^ 3:', ul_decode_N(ul_pow(ul_N(2))(ul_N(3)) )
