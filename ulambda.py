@@ -58,6 +58,12 @@ ul_B = lambda B: ul_true if B else ul_false
 ul_if = lambda b: b
 ul_is0 = lambda n: n(lambda m: ul_false)(ul_true)
 
+# more complex lambdas
+ul_leq = (lambda n1: (lambda n2: ul_is0( ul_sub(n1)(n2) ) ))
+ul_less = (lambda n1: (lambda n2: ul_is0( ul_sub(ul_inc(n1))(n2) ) ))
+ul_mod_x = (lambda n1: (lambda n2: n2  ))
+ul_mod_bad = (lambda n1: (lambda n2: ( ul_leq(n1)(n2) )( n1 )( ul_mod(ul_sub(n1)(n2))(n2)  ) )) #this turns into an infinite recursion
+ul_mod = (lambda n1: (lambda n2: ((ul_leq(n1)(n2))(n2)(n1))(lambda m: (ul_leq(m)(n2))(m)(ul_sub(m)(n2)) )(n1) ))
 
 def test1():
   print '5:', ul_decode_N(ul_N(5))
@@ -72,3 +78,11 @@ def test1():
   print '5 - 3:', ul_decode_N(ul_sub(ul_N(5))(ul_N(3)) )
   print '5 * 3:', ul_decode_N(ul_mul(ul_N(5))(ul_N(3)) )
   print '2 ^ 3:', ul_decode_N(ul_pow(ul_N(2))(ul_N(3)) )
+  print '5 <= 3:', ul_decode_B(ul_leq(ul_N(5))(ul_N(3)) )
+  print '3 <= 5:', ul_decode_B(ul_leq(ul_N(3))(ul_N(5)) )
+  print '3 <= 3:', ul_decode_B(ul_leq(ul_N(3))(ul_N(3)) )
+  print '3 < 3:', ul_decode_B(ul_less(ul_N(3))(ul_N(3)) )
+  print '3 < 5:', ul_decode_B(ul_less(ul_N(3))(ul_N(5)) )
+  print '3 % 5:', ul_decode_N(ul_mod(ul_N(3))(ul_N(5)) )
+  print '10 % 3:', ul_decode_N(ul_mod(ul_N(10))(ul_N(3)) )
+  print '3 % 5:', ul_decode_N(ul_mod(ul_N(5))(ul_N(3)) )
