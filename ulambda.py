@@ -94,12 +94,6 @@ def test1():
   print '3 % 5:', ul_decode_N(ul_mod(ul_N(3))(ul_N(5)) )
   print '10 % 3:', ul_decode_N(ul_mod(ul_N(10))(ul_N(3)) )
   print '3 % 3:', ul_decode_N(ul_mod(ul_N(3))(ul_N(3)) )
-  print '3 % 4:', ul_decode_N(ul_mod(ul_N(4))(ul_N(3)) )
-  print '3 % 5:', ul_decode_N(ul_mod(ul_N(5))(ul_N(3)) )
-
-  #print '3 % 5:', ul_decode_N(ul_mod(ul_N(5))(ul_N(3)) )
-
-
 
 
 def test_ul_fizzbuzz():
