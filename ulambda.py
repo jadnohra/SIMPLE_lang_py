@@ -1,3 +1,9 @@
+import sys
+
+# i-o kludge
+def ul_out(x, msg):
+  sys.stdout.write(msg); return x;
+
 
 # meta
 def ul_meta_build_N(n):
@@ -63,7 +69,9 @@ ul_leq = (lambda n1: (lambda n2: ul_is0( ul_sub(n1)(n2) ) ))
 ul_less = (lambda n1: (lambda n2: ul_is0( ul_sub(ul_inc(n1))(n2) ) ))
 ul_mod_x = (lambda n1: (lambda n2: n2  ))
 ul_mod_bad = (lambda n1: (lambda n2: ( ul_leq(n1)(n2) )( n1 )( ul_mod(ul_sub(n1)(n2))(n2)  ) )) #this turns into an infinite recursion
-ul_mod = (lambda n1: (lambda n2: ((ul_leq(n1)(n2))(n2)(n1))(lambda m: (ul_leq(m)(n2))(m)(ul_sub(m)(n2)) )(n1) ))
+_ul_mod_v1 = (lambda n1: (lambda n2: ((ul_less(n1)(n2))(n2)(n1))(lambda m: (ul_less(m)(n2))(m)(ul_sub(m)(n2)) )(n1) ))
+ul_mod = _ul_mod_v1
+#TODO: one version with the same 'lazy eval' trick as bs_while_eval, another with the book's ideas as a chance to learn the first combinators.
 
 def test1():
   print '5:', ul_decode_N(ul_N(5))
@@ -85,4 +93,17 @@ def test1():
   print '3 < 5:', ul_decode_B(ul_less(ul_N(3))(ul_N(5)) )
   print '3 % 5:', ul_decode_N(ul_mod(ul_N(3))(ul_N(5)) )
   print '10 % 3:', ul_decode_N(ul_mod(ul_N(10))(ul_N(3)) )
+  print '3 % 3:', ul_decode_N(ul_mod(ul_N(3))(ul_N(3)) )
+  print '3 % 4:', ul_decode_N(ul_mod(ul_N(4))(ul_N(3)) )
   print '3 % 5:', ul_decode_N(ul_mod(ul_N(5))(ul_N(3)) )
+
+  #print '3 % 5:', ul_decode_N(ul_mod(ul_N(5))(ul_N(3)) )
+
+
+
+
+def test_ul_fizzbuzz():
+  ul_mod_print = lambda s: lambda a: lambda n: ul_is0(ul_mod(n)(a))(lambda: ul_out(n, s))(lambda: ul_out(n, ''))()
+  prog_ul_fizzbuzz = lambda mx: ( ul_N(mx)(lambda m: ul_inc( ul_mod_print('FizzBuzz ')(ul_N(15))(ul_mod_print('Buzz ')(ul_N(5))( ul_mod_print('Fizz ')(ul_N(3))(m)) ) )) ( ul_N(0) ) )
+  prog_ul_fizzbuzz(30)
+  print ''
