@@ -96,7 +96,7 @@ def test1():
   print '3 % 3:', ul_decode_N(ul_mod(ul_N(3))(ul_N(3)) )
 
 
-def test_ul_fizzbuzz():
+def test_fizzbuzz():
   ul_mod_print = lambda s: lambda a: lambda n: ul_is0(ul_mod(n)(a))(lambda: ul_out(n, s))(lambda: ul_out(n, ''))()
   prog_ul_fizzbuzz = lambda mx: ( ul_N(mx)(lambda m: ul_inc( ul_mod_print('FizzBuzz ')(ul_N(15))(ul_mod_print('Buzz ')(ul_N(5))( ul_mod_print('Fizz ')(ul_N(3))(m)) ) )) ( ul_N(0) ) )
   prog_ul_fizzbuzz(30)
